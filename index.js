@@ -4,11 +4,12 @@ import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import cors from "cors";
 import schema from "./graphql/schema";
+import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
 const graphqlHTTP = require('express-graphql')
 
 const app = express();
 const PORT = process.env.PORT || "4000";
-const db = "mongodb+srv://User:confidential@cluster0-trjba.mongodb.net/test?retryWrites=true";
+const db = "mongodb+srv://User:confidential@cluster0-trjba.mongodb.net/test?retryWrites=true"
 
 mongoose.connect(
     db,

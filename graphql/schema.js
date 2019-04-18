@@ -26,9 +26,9 @@ const UserType = new GraphQLObjectType({
       status: {type: GraphQLBoolean},
       location: {type: GraphQLString},
       household_id: {
-         type: HouseType,
+         type: GraphQLList(HouseType),
          resolve(parent, arg) {
-            return House.findById(parent.household_id)
+           return parent.household_id.map(id => House.findById(id))
          }
       }
    })
@@ -59,6 +59,7 @@ const PetType = new GraphQLObjectType({
    fields: () => ({
       id: {type: GraphQLID},
       name: {type: new GraphQLNonNull(GraphQLString)},
+      photoURI: {type: GraphQLString},
       household_id: {
          type: HouseType,
          resolve(parent, arg) {
@@ -94,13 +95,6 @@ const ActivityType = new GraphQLObjectType({
 const RootQuery = new GraphQLObjectType ({
    name: 'rootQueryType',
    fields: {
-      house: {
-         type: HouseType,
-         args: {id: {type: GraphQLID}},
-         resolve(parent, args) {
-            return House.findById(args.id)
-         }
-      },
       users: {
          type: new GraphQLList(UserType),
          resolve(parent, args) {
@@ -122,8 +116,7 @@ const Mutation = new GraphQLObjectType ({
            phoneNumber: {type: GraphQLString},
            name: {type: GraphQLString},
            status: {type: GraphQLBoolean},
-           location: {type: GraphQLString},
-           household_id: {type: GraphQLString}
+           location: {type: GraphQLString}
          },
          resolve(parent, args) {
             let user = new User({
@@ -132,10 +125,24 @@ const Mutation = new GraphQLObjectType ({
                phoneNumber: args.phoneNumber,
                userName: args.userName,
                location: args.location,
-               household_id: args.household_id,
                status: args.status
             })
             return user.save();
+         }
+      },
+      updateUser: {
+         type: UserType,
+         args: {
+           id: {type: GraphQLString},
+           household_id: {type: GraphQLList(GraphQLString)}
+         },
+         resolve(parent, args) {
+           return User.findByIdAndUpdate(
+             args.id,
+             { $set: { household_id: args.household_id } },
+             { new: true }
+           )
+           .catch(err => new Error(err));
          }
       },
       addHouse: {
@@ -144,7 +151,7 @@ const Mutation = new GraphQLObjectType ({
            id: {type: GraphQLID},
            location: {type: GraphQLString},
            timezone: {type: GraphQLString},
-           name: {type: GraphQLString},
+           name: {type: GraphQLString}
          },
          resolve(parent, args) {
             let house = new House({
@@ -160,12 +167,14 @@ const Mutation = new GraphQLObjectType ({
          args: {
            id: {type: GraphQLID},
            name: {type: GraphQLString},
-           household_id: {type: GraphQLString}
+           household_id: {type: GraphQLString},
+           photoURI: {type: GraphQLString}
          },
          resolve(parent, args) {
             let pet = new Pet({
                name: args.name,
-               household_id: args.household_id
+               household_id: args.household_id,
+               photoURI: args.photoURI
             })
             return pet.save();
          }
